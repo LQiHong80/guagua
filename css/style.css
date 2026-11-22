@@ -1,0 +1,1148 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    background-color: #090d16;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    color: #f8fafc;
+}
+
+/* GLOBAL UTILITY */
+.hidden {
+    display: none !important;
+}
+
+/* FULLSCREEN RESPONSIVE VIEWPORT */
+.game-viewport {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    position: relative;
+    background: #0f172a;
+    overflow: hidden;
+}
+
+/* FULLSCREEN STAGE (Canvas & Visuals always occupy 100% of viewport) */
+.stage-container {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to bottom, #f1f5f9 0%, #e2e8f0 75%, #cbd5e1 100%);
+    overflow: hidden;
+    z-index: 1;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Top-Right Controls: Sound + Fullscreen Toggle Buttons */
+.top-right-controls {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 50;
+}
+
+.fullscreen-btn,
+.sound-btn {
+    background: rgba(15, 23, 42, 0.88);
+    border: 2px solid #475569;
+    color: #e2e8f0;
+    padding: 8px 15px;
+    min-height: 40px;
+    border-radius: 10px;
+    font-size: 0.96rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.fullscreen-btn:active,
+.sound-btn:active {
+    transform: scale(0.96);
+    background: #2563eb;
+    border-color: #60a5fa;
+    color: #fff;
+}
+
+.sound-btn.muted {
+    background: rgba(15, 23, 42, 0.65);
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+/* STATS HUD (Top-Left) */
+.stats-hud {
+    position: absolute;
+    top: max(12px, env(safe-area-inset-top));
+    left: max(16px, env(safe-area-inset-left));
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(6px);
+    border: 3px solid #0f172a;
+    border-radius: 12px;
+    padding: 8px 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    z-index: 50;
+    min-width: 136px;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 3px 0;
+}
+
+.stat-icon {
+    font-size: 1.3rem;
+    margin-right: 8px;
+}
+
+.stat-val {
+    font-family: monospace;
+    font-size: 1.38rem;
+}
+
+.stat-danger {
+    color: #dc2626 !important;
+    animation: pulse 0.8s infinite alternate;
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.18); }
+}
+
+.floating-deltas-container {
+    position: absolute;
+    top: max(16px, env(safe-area-inset-top));
+    left: calc(max(16px, env(safe-area-inset-left)) + 150px);
+    pointer-events: none;
+    z-index: 22;
+}
+
+.floating-delta {
+    font-size: 1.35rem;
+    font-weight: 900;
+    margin-bottom: 4px;
+    padding: 4px 12px;
+    border-radius: 8px;
+    animation: floatUp 1.8s forwards ease-out;
+}
+
+.delta-positive {
+    background: rgba(34, 197, 94, 0.95);
+    color: #ffffff;
+}
+
+.delta-negative {
+    background: rgba(239, 68, 68, 0.95);
+    color: #ffffff;
+}
+
+@keyframes floatUp {
+    0% { opacity: 0; transform: translateY(10px) scale(0.8); }
+    15% { opacity: 1; transform: translateY(0) scale(1.1); }
+    80% { opacity: 1; transform: translateY(-30px); }
+    100% { opacity: 0; transform: translateY(-50px); }
+}
+
+/* 50% / 50% DECISION DOCK (Bottom 50% of Viewport, Enlarged Text & Touch Cards) */
+.decision-dock {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 50%;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    padding: 14px max(28px, env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left));
+    background: linear-gradient(
+        to bottom,
+        rgba(15, 23, 42, 0.92) 0%,
+        rgba(9, 13, 22, 0.97) 100%
+    );
+    border-top: 2px solid rgba(56, 189, 248, 0.45);
+    box-shadow: 0 -10px 28px rgba(0, 0, 0, 0.42);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    pointer-events: auto;
+}
+
+.decision-dock .story-header,
+.decision-dock .options-panel {
+    width: 100%;
+    max-width: 1380px;
+    margin: 0 auto;
+}
+
+/* STORY HEADER */
+.story-header {
+    padding: 0 0 10px 0;
+    background: transparent;
+    border-bottom: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.story-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.age-badge {
+    background: #f59e0b;
+    color: #0f172a;
+    font-weight: 900;
+    padding: 4px 12px;
+    border-radius: 7px;
+    font-size: 1.05rem;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.scenario-title {
+    font-size: 1.48rem;
+    font-weight: 800;
+    color: #38bdf8;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+.scenario-text {
+    font-size: 1.2rem;
+    line-height: 1.38;
+    color: #f8fafc;
+    font-weight: 500;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* BOTTOM 2x2 DECISION OPTIONS PANEL */
+.options-panel {
+    padding: 0;
+    background: transparent;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: minmax(68px, 1fr);
+    grid-gap: 12px;
+    flex: 1;
+}
+
+.option-card {
+    background: rgba(30, 41, 59, 0.92);
+    backdrop-filter: blur(8px);
+    border: 2px solid rgba(148, 163, 184, 0.44);
+    border-radius: 12px;
+    padding: 13px 18px;
+    cursor: pointer;
+    text-align: left;
+    color: #f8fafc;
+    transition: all 0.15s ease-in-out;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    min-height: 68px;
+}
+
+.option-card:active {
+    background: rgba(37, 99, 235, 0.95);
+    border-color: #93c5fd;
+    transform: scale(0.985);
+}
+
+.option-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+.option-letter {
+    background: #0f172a;
+    color: #38bdf8;
+    font-weight: 900;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+.option-body {
+    font-size: 1.14rem;
+    line-height: 1.35;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+/* ==========================================================================
+   FULL-STAGE CUTSCENE MODE & BOTTOM CINEMATIC BAR
+   ========================================================================== */
+.game-viewport.cutscene-active .decision-dock {
+    display: none !important;
+}
+
+.cinematic-bottom-bar {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    height: 40% !important;
+    min-height: 140px !important;
+    max-height: 40% !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(9, 13, 22, 0.98) 100%) !important;
+    backdrop-filter: blur(8px) !important;
+    border-top: 3px solid #38bdf8;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px max(34px, env(safe-area-inset-right)) calc(18px + env(safe-area-inset-bottom)) max(34px, env(safe-area-inset-left)) !important;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+    transition: opacity 0.3s ease;
+}
+
+.cinematic-bottom-bar.hidden {
+    display: none !important;
+}
+
+#memory-flash-overlay.cinematic-bottom-bar {
+    border-top-color: #f59e0b;
+}
+
+#disaster-modal.cinematic-bottom-bar {
+    border-top-color: #ef4444;
+}
+
+.cinematic-bar-inner {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 1400px !important;
+    width: 100% !important;
+    padding: 0 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 20px;
+    text-align: left !important;
+}
+
+.cinematic-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    flex: 1;
+    min-width: 0;
+}
+
+.cinematic-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.prologue-chapter,
+.memory-badge,
+.disaster-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    padding: 7px 16px;
+    border-radius: 22px;
+    margin-bottom: 0 !important;
+    white-space: nowrap;
+    letter-spacing: 0.5px;
+}
+
+.prologue-chapter {
+    background: #0284c7;
+    color: #ffffff;
+}
+
+.memory-badge {
+    background: #b45309;
+    color: #fef3c7;
+}
+
+.disaster-badge {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.prologue-title,
+.memory-title,
+.disaster-title {
+    font-size: 2.15rem !important;
+    font-weight: 900 !important;
+    margin: 0 !important;
+    line-height: 1.25;
+}
+
+.prologue-title {
+    color: #f8fafc;
+}
+
+.memory-title {
+    color: #fcd34d;
+}
+
+.disaster-title {
+    color: #fca5a5;
+}
+
+.prologue-narrative,
+.memory-text {
+    display: none !important;
+}
+
+#disaster-modal .cinematic-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.disaster-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.disaster-scenario {
+    display: block !important;
+    font-size: 1.28rem;
+    color: #f8fafc;
+    margin: 3px 0;
+    line-height: 1.38;
+    font-weight: 600;
+}
+
+.disaster-narrative {
+    display: block !important;
+    font-size: 1.14rem;
+    color: #cbd5e1;
+    margin: 2px 0 0 0;
+    line-height: 1.35;
+    font-style: italic;
+}
+
+.prologue-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.btn-skip {
+    background: transparent;
+    border: 2px solid #64748b;
+    color: #cbd5e1;
+    padding: 10px 18px;
+    min-height: 44px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-skip:active {
+    border-color: #f8fafc;
+    color: #ffffff;
+    transform: scale(0.97);
+}
+
+/* White flash effect on trigger */
+.flash-effect {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    pointer-events: none;
+    z-index: 200;
+    animation: whiteFlash 0.35s forwards ease-out;
+}
+
+@keyframes whiteFlash {
+    0% { opacity: 0.45; }
+    100% { opacity: 0; }
+}
+
+@keyframes memoryFadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* MODAL OVERLAYS (Game Over, Victory) */
+.modal-overlay:not(.cinematic-bottom-bar) {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(3px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 160;
+    padding: 28px;
+}
+
+.modal-overlay.hidden {
+    display: none !important;
+}
+
+.modal-box {
+    background: #1e293b;
+    border: 4px solid #64748b;
+    border-radius: 14px;
+    padding: 24px;
+    max-width: 620px;
+    width: 100%;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.protection-notice {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid #38bdf8;
+    padding: 6px 14px;
+    border-radius: 22px;
+    color: #38bdf8;
+    font-size: 1.02rem;
+    font-weight: 700;
+    margin-bottom: 0 !important;
+    white-space: nowrap;
+}
+
+.consequence-pills {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 0 !important;
+}
+
+.pill {
+    padding: 8px 16px;
+    border-radius: 22px;
+    font-weight: 900;
+    font-size: 1.22rem;
+    white-space: nowrap;
+}
+
+.pill-neg { background: #ef4444; color: #ffffff; }
+.pill-pos { background: #22c55e; color: #ffffff; }
+.pill-neutral { background: #64748b; color: #ffffff; }
+
+/* Game Over Modal (Henry Stickmin FAIL Style) */
+.gameover-box {
+    border-color: #dc2626;
+    background: #18181b;
+}
+
+.fail-stamp {
+    display: inline-block;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 2.2rem;
+    font-weight: 900;
+    padding: 4px 24px;
+    border-radius: 8px;
+    transform: rotate(-3deg);
+    margin-bottom: 16px;
+    box-shadow: 0 4px 10px rgba(220, 38, 38, 0.4);
+    letter-spacing: 2px;
+}
+
+.game-over-quote {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fef08a;
+    margin-bottom: 10px;
+}
+
+.game-over-cause {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 24px;
+}
+
+/* Victory Modal */
+.victory-box {
+    border-color: #22c55e;
+    text-align: left;
+}
+
+.victory-title {
+    color: #4ade80;
+    font-size: 1.6rem;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+}
+
+.summary-table th, .summary-table td {
+    padding: 8px 12px;
+    border: 1px solid #334155;
+}
+
+.summary-table th {
+    background: #0f172a;
+    color: #38bdf8;
+}
+
+.victory-narrative {
+    background: #0f172a;
+    padding: 14px;
+    border-radius: 10px;
+    line-height: 1.55;
+    color: #e2e8f0;
+    font-size: 1.08rem;
+    margin-bottom: 20px;
+    white-space: pre-line;
+}
+
+/* Buttons */
+.btn-primary {
+    background: #2563eb;
+    color: white;
+    font-weight: 800;
+    border: none;
+    padding: 13px 28px;
+    min-height: 52px;
+    border-radius: 10px;
+    font-size: 1.24rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.12s;
+    white-space: nowrap;
+}
+
+.btn-primary:active {
+    background: #1d4ed8;
+    transform: scale(0.97);
+}
+
+.btn-retry {
+    background: #dc2626;
+}
+
+.btn-retry:active {
+    background: #b91c1c;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   DESKTOP HOVER EFFECTS (Disabled on Touch-Only Mobile Devices)
+   ========================================================================== */
+@media (hover: hover) {
+    .fullscreen-btn:hover,
+    .sound-btn:hover {
+        background: #2563eb;
+        border-color: #60a5fa;
+        color: #fff;
+    }
+
+    .sound-btn.muted:hover {
+        background: #334155;
+        border-color: #64748b;
+        color: #f8fafc;
+    }
+
+    .option-card:hover {
+        background: rgba(37, 99, 235, 0.94);
+        border-color: #93c5fd;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+    }
+
+    .btn-skip:hover {
+        border-color: #f8fafc;
+        color: #ffffff;
+    }
+
+    .btn-primary:hover {
+        background: #1d4ed8;
+    }
+
+    .btn-retry:hover {
+        background: #b91c1c;
+    }
+}
+
+/* ==========================================================================
+   MOBILE LANDSCAPE RESPONSIVE TUNING (50% Stage / 50% Decision Dock)
+   ========================================================================== */
+@media (max-height: 540px) and (orientation: landscape) {
+    /* Compact horizontal HUD so top 50% stage sky stays wide open */
+    .stats-hud {
+        top: max(8px, env(safe-area-inset-top));
+        left: max(12px, env(safe-area-inset-left));
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        padding: 5px 12px;
+        min-width: auto;
+        border-width: 2px;
+        border-radius: 10px;
+    }
+
+    .stat-row {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .stat-icon {
+        font-size: 1.08rem;
+        margin-right: 4px;
+    }
+
+    .stat-val {
+        font-size: 1.15rem;
+    }
+
+    .floating-deltas-container {
+        top: calc(max(8px, env(safe-area-inset-top)) + 42px);
+        left: max(12px, env(safe-area-inset-left));
+    }
+
+    .floating-delta {
+        font-size: 1.05rem;
+        padding: 2px 9px;
+    }
+
+    .top-right-controls {
+        top: max(8px, env(safe-area-inset-top));
+        right: max(12px, env(safe-area-inset-right));
+        gap: 6px;
+    }
+
+    .fullscreen-btn,
+    .sound-btn {
+        padding: 6px 11px;
+        min-height: 36px;
+        font-size: 0.88rem;
+        border-radius: 8px;
+    }
+
+    /* Bottom 50% Decision Dock — big readable text + roomy touch cards */
+    .decision-dock {
+        height: 50%;
+        padding: 7px max(14px, env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    }
+
+    .story-header {
+        padding: 0 0 6px 0;
+        gap: 3px;
+    }
+
+    .story-meta {
+        gap: 8px;
+    }
+
+    .age-badge {
+        font-size: 0.88rem;
+        padding: 2px 9px;
+    }
+
+    .scenario-title {
+        font-size: 1.12rem;
+    }
+
+    .scenario-text {
+        font-size: 1rem;
+        line-height: 1.25;
+    }
+
+    .options-grid {
+        grid-gap: 7px;
+        grid-auto-rows: minmax(48px, 1fr);
+    }
+
+    .option-card {
+        padding: 7px 11px;
+        gap: 9px;
+        min-height: 48px;
+        border-radius: 9px;
+    }
+
+    .option-letter {
+        width: 28px;
+        height: 28px;
+        font-size: 0.98rem;
+        border-radius: 6px;
+    }
+
+    .option-body {
+        font-size: 0.98rem;
+        line-height: 1.24;
+    }
+
+    /* Cinematic & Unexpected Event Bottom Bars — 6:4 Ratio (60% Stage / 40% Text Bar) */
+    .cinematic-bottom-bar {
+        height: 40% !important;
+        min-height: 0 !important;
+        max-height: 40% !important;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+    }
+
+    .cinematic-bar-inner {
+        gap: 14px;
+    }
+
+    .prologue-chapter,
+    .memory-badge,
+    .disaster-badge,
+    .protection-notice {
+        font-size: 0.95rem;
+        padding: 5px 12px;
+    }
+
+    .prologue-title,
+    .memory-title,
+    .disaster-title {
+        font-size: 1.45rem !important;
+    }
+
+    .disaster-scenario {
+        font-size: 1.08rem;
+        line-height: 1.3;
+    }
+
+    .disaster-narrative {
+        font-size: 0.96rem;
+        line-height: 1.26;
+    }
+
+    .pill {
+        font-size: 1.05rem;
+        padding: 5px 12px;
+    }
+
+    .btn-primary {
+        padding: 10px 20px;
+        min-height: 44px;
+        font-size: 1.08rem;
+    }
+
+    .btn-skip {
+        padding: 9px 16px;
+        min-height: 42px;
+        font-size: 0.96rem;
+    }
+
+    /* Game Over & Victory Modals — Scrollable on Short Landscape Phones */
+    .modal-overlay:not(.cinematic-bottom-bar) {
+        padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+
+    .modal-box {
+        max-height: 92dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 16px 20px;
+    }
+
+    .fail-stamp {
+        font-size: 1.75rem;
+        margin-bottom: 10px;
+    }
+
+    .game-over-quote {
+        font-size: 1.2rem;
+    }
+
+    .game-over-cause {
+        font-size: 0.95rem;
+        margin-bottom: 14px;
+    }
+
+    .victory-title {
+        font-size: 1.28rem;
+        margin-bottom: 10px;
+    }
+
+    .summary-table th,
+    .summary-table td {
+        padding: 6px 10px;
+        font-size: 0.95rem;
+    }
+
+    .victory-narrative {
+        font-size: 0.96rem;
+        padding: 10px;
+        margin-bottom: 14px;
+    }
+}
+
+/* ==========================================================================
+   MOBILE PORTRAIT RESPONSIVE TUNING (Full Dual-Orientation Playability)
+   ========================================================================== */
+@media (orientation: portrait) and (max-width: 900px) {
+    /* Compact horizontal HUD so stage top stays clean */
+    .stats-hud {
+        top: max(10px, env(safe-area-inset-top));
+        left: max(12px, env(safe-area-inset-left));
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 12px;
+        min-width: auto;
+        border-width: 2.5px;
+        border-radius: 10px;
+    }
+
+    .stat-row {
+        margin: 0;
+        font-size: 1.02rem;
+    }
+
+    .stat-icon {
+        font-size: 1.12rem;
+        margin-right: 4px;
+    }
+
+    .stat-val {
+        font-size: 1.18rem;
+    }
+
+    .floating-deltas-container {
+        top: calc(max(10px, env(safe-area-inset-top)) + 48px);
+        left: max(12px, env(safe-area-inset-left));
+    }
+
+    .top-right-controls {
+        top: max(10px, env(safe-area-inset-top));
+        right: max(12px, env(safe-area-inset-right));
+        gap: 6px;
+    }
+
+    .fullscreen-btn,
+    .sound-btn {
+        padding: 7px 11px;
+        min-height: 38px;
+        font-size: 0.88rem;
+    }
+
+    /* 50% / 50% Decision Split — Big Single-Column Touch Cards */
+    .decision-dock {
+        height: 50%;
+        padding: 12px max(14px, env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+    }
+
+    .story-header {
+        padding: 0 0 8px 0;
+        gap: 4px;
+    }
+
+    .age-badge {
+        font-size: 0.95rem;
+        padding: 3px 10px;
+    }
+
+    .scenario-title {
+        font-size: 1.26rem;
+    }
+
+    .scenario-text {
+        font-size: 1.06rem;
+        line-height: 1.32;
+    }
+
+    .options-grid {
+        grid-template-columns: 1fr;
+        grid-gap: 9px;
+        grid-auto-rows: minmax(56px, auto);
+    }
+
+    .option-card {
+        padding: 11px 14px;
+        gap: 12px;
+        min-height: 56px;
+        border-radius: 11px;
+    }
+
+    .option-letter {
+        width: 32px;
+        height: 32px;
+        font-size: 1.06rem;
+    }
+
+    .option-body {
+        font-size: 1.06rem;
+        line-height: 1.32;
+    }
+
+    /* 6:4 Cinematic / Life Moment / Unexpected Event Bottom Bar in Portrait */
+    .cinematic-bottom-bar {
+        height: 40% !important;
+        min-height: 0 !important;
+        max-height: 40% !important;
+        padding: 14px max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+    }
+
+    .cinematic-bar-inner {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: space-between !important;
+        gap: 12px;
+        min-height: 100%;
+    }
+
+    .cinematic-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .prologue-chapter,
+    .memory-badge,
+    .disaster-badge,
+    .protection-notice {
+        font-size: 0.96rem;
+        padding: 5px 13px;
+    }
+
+    .prologue-title,
+    .memory-title,
+    .disaster-title {
+        font-size: 1.52rem !important;
+        line-height: 1.26;
+    }
+
+    .disaster-scenario {
+        font-size: 1.12rem;
+        line-height: 1.35;
+    }
+
+    .disaster-narrative {
+        font-size: 1rem;
+        line-height: 1.32;
+    }
+
+    .cinematic-right,
+    .prologue-actions {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .pill {
+        font-size: 1.1rem;
+        padding: 6px 13px;
+    }
+
+    .btn-primary {
+        padding: 12px 22px;
+        min-height: 48px;
+        font-size: 1.12rem;
+        flex: 1;
+    }
+
+    .btn-skip {
+        padding: 11px 16px;
+        min-height: 48px;
+        font-size: 1rem;
+    }
+
+    /* Modals in Portrait */
+    .modal-overlay:not(.cinematic-bottom-bar) {
+        padding: 16px max(16px, env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+
+    .modal-box {
+        max-height: 88dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 20px 18px;
+    }
+
+    .fail-stamp {
+        font-size: 2rem;
+    }
+
+    .game-over-quote {
+        font-size: 1.3rem;
+    }
+
+    .victory-title {
+        font-size: 1.4rem;
+    }
+}
+
+/* Narrow phones in portrait: icon-only top-right buttons so HUD never collides */
+@media (orientation: portrait) and (max-width: 480px) {
+    #sound-text,
+    #fullscreen-text {
+        display: none;
+    }
+
+    .fullscreen-btn,
+    .sound-btn {
+        padding: 7px 11px;
+        min-width: 40px;
+        justify-content: center;
+    }
+}

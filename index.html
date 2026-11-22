@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <title>Stickman Financial Survival — Life Decision Simulator</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+
+    <div class="game-viewport" id="game-viewport">
+        <!-- FULLSCREEN STAGE: Character Canvas + Stats HUD + Fullscreen Toggle -->
+        <div class="stage-container" id="stage-container">
+            <!-- Top-Right Controls: Sound Toggle + Fullscreen Toggle -->
+            <div class="top-right-controls">
+                <button class="sound-btn" id="btn-sound" title="Toggle Sound & Music">
+                    <span id="sound-icon">🔊</span> <span id="sound-text">Sound</span>
+                </button>
+                <button class="fullscreen-btn" id="btn-fullscreen">
+                    <span id="fullscreen-icon">⛶</span> <span id="fullscreen-text">Fullscreen</span>
+                </button>
+            </div>
+
+            <!-- Stats HUD (Top-Left) -->
+            <div class="stats-hud">
+                <div class="stat-row">
+                    <span class="stat-icon">❤️</span>
+                    <span class="stat-val" id="stat-happiness">10</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">💰</span>
+                    <span class="stat-val" id="stat-financial">10</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-icon">🏥</span>
+                    <span class="stat-val" id="stat-health">10</span>
+                </div>
+            </div>
+
+            <!-- Floating +/- Delta Numbers Container -->
+            <div class="floating-deltas-container" id="floating-deltas"></div>
+
+            <!-- 2D Skeletal Animation Canvas -->
+            <canvas id="game-canvas"></canvas>
+        </div>
+
+        <!-- FLOATING DECISION DOCK (Translucent Overlay over Fullscreen Canvas) -->
+        <div class="decision-dock" id="decision-dock">
+            <div class="story-header">
+                <div class="story-meta">
+                    <span class="age-badge" id="age-badge">AGE: 18</span>
+                    <span class="scenario-title" id="scenario-title">University Life</span>
+                </div>
+                <div class="scenario-text" id="scenario-text">
+                    Loading life story...
+                </div>
+            </div>
+
+            <div class="options-panel">
+                <div class="options-grid" id="options-grid">
+                    <!-- Injected via UIManager: 4 cards (A, B, C, D) -->
+                </div>
+            </div>
+        </div>
+
+        <!-- PROLOGUE / FLASHBACK MONTAGE (Fullscreen Canvas + Bottom Subtitle Bar) -->
+        <div class="prologue-overlay cinematic-bottom-bar" id="prologue-overlay">
+            <div class="prologue-card cinematic-bar-inner">
+                <div class="cinematic-info">
+                    <span class="prologue-chapter" id="prologue-chapter">Prologue · Birth</span>
+                    <h1 class="prologue-title" id="prologue-title">With a loud cry, you enter the world</h1>
+                    <p class="prologue-narrative hidden" id="prologue-narrative"></p>
+                </div>
+                <div class="prologue-actions">
+                    <button class="btn-skip" id="btn-prologue-skip">Skip Intro ⏩</button>
+                    <button class="btn-primary" id="btn-prologue-next">Next Scene ➜</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MEMORY FLASH OVERLAY (Fullscreen Cutscene + Bottom Subtitle Bar) -->
+        <div class="memory-flash-overlay cinematic-bottom-bar hidden" id="memory-flash-overlay" style="display: none;">
+            <div class="memory-card cinematic-bar-inner">
+                <div class="cinematic-info">
+                    <span class="memory-badge">🎬 Life Moment</span>
+                    <h2 class="memory-title" id="memory-title">Life Moment</h2>
+                    <div class="memory-text hidden" id="memory-text"></div>
+                </div>
+                <div class="cinematic-right">
+                    <div class="consequence-pills" id="memory-consequence-pills"></div>
+                    <button class="btn-primary" id="btn-memory-continue">Continue ➜</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 1: Random Incident / Disaster (Fullscreen Disaster Scene + Bottom Summary Bar) -->
+        <div class="modal-overlay cinematic-bottom-bar hidden" id="disaster-modal">
+            <div class="modal-box disaster-box cinematic-bar-inner">
+                <div class="cinematic-info">
+                    <div class="disaster-header-row">
+                        <span class="disaster-badge">⚡ Unexpected Event</span>
+                        <h2 class="disaster-title" id="modal-event-title">Unexpected Event</h2>
+                        <span class="protection-notice" id="modal-protection-used">Protection: None</span>
+                    </div>
+                    <p class="disaster-scenario" id="modal-event-scenario"></p>
+                    <p class="disaster-narrative" id="modal-narrative"></p>
+                </div>
+                <div class="cinematic-right">
+                    <div class="consequence-pills" id="modal-consequence-pills"></div>
+                    <button class="btn-primary" id="modal-dismiss-btn">Continue ➜</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL 2: Game Over (Henry Stickmin Style FAIL) -->
+        <div class="modal-overlay hidden" id="game-over-modal">
+            <div class="modal-box gameover-box">
+                <div class="fail-stamp">FAIL</div>
+                <div class="game-over-quote" id="game-over-quote">"Remember to be happy"</div>
+                <div class="game-over-cause" id="game-over-cause">Ended at age 25 — Health hit 0</div>
+                <button class="btn-primary btn-retry" id="btn-retry">RETRY LIFE</button>
+            </div>
+        </div>
+
+        <!-- MODAL 3: Victory & Evaluation (Survive Past Age 60) -->
+        <div class="modal-overlay hidden" id="victory-modal">
+            <div class="modal-box victory-box">
+                <h2 class="victory-title">🎉 Happy Retirement Achieved (Age 60!)</h2>
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Life Pillar</th>
+                            <th>Final Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="victory-table-body">
+                        <!-- Summary Table Injected Here -->
+                    </tbody>
+                </table>
+                <div class="victory-narrative" id="victory-narrative">
+                    Evaluating your life journey...
+                </div>
+                <div style="text-align: center;">
+                    <button class="btn-primary" id="btn-win-restart">Live Another Life</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Logic Entry Point (Standard bundle, works directly via file:// or http://) -->
+    <script src="./game.bundle.js"></script>
+</body>
+</html>
